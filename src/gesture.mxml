@@ -1,0 +1,357 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx" minWidth="955" minHeight="600">
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			import mx.effects.Resize;
+			import mx.validators.EmailValidator;
+			
+			
+			protected var recognizer:Recognizer;
+			[Bindable]
+			protected var result:Result;
+			[Bindable]
+			
+			protected var isMicroOn:Boolean=true;
+			protected var isSpeakOn:Boolean=false;
+			protected var isNumberOn:Boolean=false;
+			protected var isCameraOn:Boolean=false;
+			protected var status:int=1;
+			
+			protected function incallDraw_mouseUpHandler(event:MouseEvent):void
+			{
+				recognizer=new Recognizer();
+				var inputPoints:Array;				
+				inputPoints=incallDraw.getPoints();
+				
+				//var outputPoints:Array;
+				//outputPoints=recognizer.templatePoint(inputPoints,"arcToUp");
+				//resultTX.text="1";
+				//for(var i:Number=0;i<outputPoints.length;i++)
+				//{
+				//	resultTX.text+="("+Math.round(outputPoints[i].x)+","+Math.round(outputPoints[i].y)+")";
+				//}
+				//resultTX.text=outputPoints[0].x+","+outputPoints[0].y;
+				
+				
+				result=recognizer.recognize(inputPoints);
+				//newlb.text=result.template.name+" "+result.score;
+				
+				if(status==1)
+				{
+					inCallPic_m2.alpha=0;
+					inCallPic_m2.visible=true;
+					
+					if(result.template.name=="answer" && result.score>=0.65)
+					{
+						addEventListener(Event.ENTER_FRAME,inCallTipFadeOut);
+						status=2;
+					}
+					else if(result.template.name=="decline" && result.score>=0.5)
+					{
+						inCallContainer.visible=false;
+					}
+				}
+				else if(status==2)
+				{
+					if(result.template.name=="microPhone" && result.score>=0.65)
+					{
+						msPic.visible=true;
+						
+						if(isMicroOn)
+						{
+							mIcon.source="assets/m_off_s.jpg";
+							msPic.alpha=0;
+							msPic.source="assets/m_off.jpg";
+							inCallTip2.visible=false;
+							addEventListener(Event.ENTER_FRAME,MSPicFade);
+							isMicroOn=false;
+						}
+						else
+						{
+							mIcon.source="assets/m_on_s.jpg";
+							msPic.alpha=0;
+							msPic.source="assets/m_on.jpg";
+							inCallTip2.visible=false;
+							addEventListener(Event.ENTER_FRAME,MSPicFade);
+							isMicroOn=true;
+						}
+						
+					}
+					else if(result.template.name=="speakerPhone" && result.score>=0.65)
+					{
+						msPic.visible=true;
+						
+						if(isSpeakOn)
+						{
+							sIcon.source="assets/s_off_s.jpg";
+							msPic.alpha=0;
+							msPic.source="assets/s_off.jpg";
+							inCallTip2.visible=false;
+							addEventListener(Event.ENTER_FRAME,MSPicFade);
+							isSpeakOn=false;
+						}
+						else
+						{
+							sIcon.source="assets/s_on_s.jpg";
+							msPic.alpha=0;
+							msPic.source="assets/s_on.jpg";
+							inCallTip2.visible=false;
+							addEventListener(Event.ENTER_FRAME,MSPicFade);
+							isSpeakOn=true;
+						}
+						
+					}
+					else if(result.template.name=="number" && result.score>=0.65)
+					{	
+						msPic.visible=false;
+						
+						if(isNumberOn)
+						{
+							//drawContainer.height=430;
+							clearPic.alpha=0;
+							inCallTip2.visible=false;
+							addEventListener(Event.ENTER_FRAME,	NumberFadeOut);
+							isNumberOn=false;
+						}
+						else
+						{
+							numPic.height=250;
+							numPic.y=0;
+							clearPic.alpha=1;
+							inCallTip2.visible=false;
+							addEventListener(Event.ENTER_FRAME,	NumberFadeIn);
+							isNumberOn=true;
+						}
+						
+					}
+					else if(result.template.name=="camera" && result.score>=0.65)
+					{
+						msPic.visible=false;
+						
+						if(isCameraOn)
+						{
+							cameraPic1.alpha=0;
+							shootBt.enabled=false;
+							shootBt.buttonMode=false;
+							isCameraOn=false;
+							inCallTip2.visible=false;
+						}
+						else
+						{
+							cameraPic1.alpha=1;
+							shootBt.enabled=true;
+							shootBt.buttonMode=true;
+							isCameraOn=true;
+							inCallTip2.visible=false;
+						}
+						
+					}
+					else if(result.template.name=="decline" && result.score>=0.5)
+					{
+						
+						inCallContainer.visible=false;
+						missPic.source="assets/endcall.jpg";
+						
+					}
+					
+				}
+				
+			}
+			protected function inCallTipFadeOut(event:Event):void
+			{
+				inCallTip.alpha=inCallTip.alpha-0.1;
+				inCallTip.y=inCallTip.y+1;
+				
+				inCallPic_m.alpha=inCallPic_m.alpha-0.1;
+				inCallPic_m.y=inCallPic_m.y-3;
+				
+				inCallPic_m2.alpha=inCallPic_m2.alpha+0.1;
+
+				inCallTip2.alpha+=0.1;
+				if(inCallTip.alpha==0)
+				{
+					inCallTip.visible=false;
+					
+					removeEventListener(Event.ENTER_FRAME,inCallTipFadeOut);
+				}
+				
+			}			
+			protected function MSPicFade(event:Event):void
+			{
+				if(msPic.alpha<=1)
+				{
+					msPic.alpha+=0.1;
+					inCallTip2.visible=false;
+					if(msPic.alpha==1)
+					{
+						removeEventListener(Event.ENTER_FRAME,MSPicFade);
+					}
+						
+				}
+			}
+
+			protected function NumberFadeIn(event:Event):void
+			{
+				numPic.alpha+=0.1;
+
+				if(numPic.alpha==1)
+				{
+					removeEventListener(Event.ENTER_FRAME,NumberFadeIn);
+				}
+					
+			}
+			protected function NumberFadeOut(event:Event):void
+			{
+				//clearPic.alpha=0;
+				numPic.height-=25;
+				numPic.y+=25;
+				if(numPic.height==0)
+				{
+					numPic.alpha=0;
+					//clearPic.alpha=0;
+					removeEventListener(Event.ENTER_FRAME,NumberFadeOut);
+				}
+					
+			}
+			
+			
+			protected function shootBt_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				
+				addEventListener(Event.ENTER_FRAME,inCallPicWFade);
+				
+			}	
+			protected function inCallPicWFade(event:Event):void
+			{
+				inCallPic_w2.alpha+=0.1;
+				inCallPic_w.alpha-=0.1;
+				sentPic.alpha+=0.1;
+				inCallTip2.visible=false;
+				if(inCallPic_w2.alpha==1)
+				{
+					removeEventListener(Event.ENTER_FRAME,inCallPicWFade);
+				}
+			}
+		]]>
+	</fx:Script>
+	<s:BorderContainer x="10" y="10" width="320" height="480" id="bgcontainer"
+					   backgroundImage="@Embed('../image/mobile_bg.jpg')" borderVisible="false">
+		<s:BorderContainer id="msIcon" width="38" 
+						   x="220" y="8"
+						   height="18" borderVisible="false">
+			<s:Image id="mIcon" width="14" height="18" 
+					 x="0" y="0"
+					 source="assets/m_on_s.jpg">		
+			</s:Image>
+			<s:Image id="sIcon" width="18" height="18" 
+					 x="24" y="0"
+					 source="assets/s_off_s.jpg">	
+			</s:Image>	
+		</s:BorderContainer>
+		<s:Image id="missPic" x="10" y="400" source="assets/misscall.jpg">
+			
+		</s:Image>
+		<s:BorderContainer id="inCallContainer" x="10" y="40" width="300" height="430"
+						   borderVisible="false" >		
+			<s:Image id="inCallPic_m2" x="90" y="55" width="120" height="160"
+					 source="assets/calling_m2.jpg" alpha="1" visible="false">	
+			</s:Image>
+					 
+			<s:Image id="inCallTip" x="50" y="360" width="200" height="50" 
+					 source="assets/tip1.jpg">				
+			</s:Image>
+			
+			
+			<s:BorderContainer id="inCallContainer2" width="300" height="430"
+							   borderVisible="false"
+							   backgroundAlpha="0.0" contentBackgroundAlpha="0.0">
+				<s:Image id="inCallPic_m" x="90" y="90" width="120" height="200"
+						 source="assets/calling_m.jpg">
+				</s:Image>
+				<s:Image id="inCallTip2" x="0" y="280" source="assets/tip2.jpg" alpha="0">
+					
+				</s:Image>
+				<s:Image id="msPic" width="110" height="60" alpha="0.0" 
+						 x="95" y="260">	
+				</s:Image>
+				
+				<s:BorderContainer id="numContainer" borderVisible="false"
+								   width="300" height="250"
+								   x="0" y="180"
+								   backgroundAlpha="0.0" contentBackgroundAlpha="0.0">
+					<s:Image id="numPic" width="300" height="250" alpha="0.0"
+							 source="assets/number.jpg">
+					</s:Image>		
+					<s:Image id="clearPic" 
+							 x="250" y="8"
+							 source="assets/delnum.jpg" alpha="0.0">
+					</s:Image>
+				</s:BorderContainer>
+				<s:BorderContainer id="noteContainer" borderVisible="false"
+								   width="300" height="430"
+								   backgroundAlpha="0.0" contentBackgroundAlpha="0.0">
+					<s:Image id="notePic" source="assets/note.jpg" alpha="0.0">
+					</s:Image>
+					 
+				</s:BorderContainer>
+				<s:BorderContainer id="cameraContainer" borderVisible="false"
+								   width="300" height="430"
+								   backgroundAlpha="0.0" contentBackgroundAlpha="0.0">
+					<s:Image id="cameraPic1" source="assets/camera.jpg" alpha="0.0">
+					</s:Image>			
+				</s:BorderContainer>
+			</s:BorderContainer>
+			
+			
+			<s:BorderContainer id="drawContainer" width="300" height="430" backgroundAlpha="0.0"
+							   borderVisible="false" contentBackgroundAlpha="0.0">
+				<DrawingArea xmlns="*"
+							 id="incallDraw" width="100%" height="100%"
+							 mouseUp="incallDraw_mouseUpHandler(event)">
+				</DrawingArea>
+			</s:BorderContainer>
+			
+			<s:Button id="shootBt" x="130" y="394" width="40" height="40" alpha="0"
+					  click="shootBt_clickHandler(event)">			
+			</s:Button>
+			
+		</s:BorderContainer>
+		
+	</s:BorderContainer>
+	<s:BorderContainer x="350" y="10" width="320" height="480" id="bgcontainer2"
+					   backgroundImage="@Embed('../image/mobile_bg.jpg')" borderVisible="false">
+		<s:BorderContainer id="msIcon2" width="38" 
+						   x="220" y="8"
+						   height="18" borderVisible="false">
+			<s:Image id="mIcon2" width="14" height="18" 
+					 x="0" y="0"
+					 source="assets/m_on_s.jpg">		
+			</s:Image>
+			<s:Image id="sIcon2" width="18" height="18" 
+					 x="24" y="0"
+					 source="assets/s_off_s.jpg">	
+			</s:Image>	
+		</s:BorderContainer>
+		<s:BorderContainer id="inCallContainer_w" x="10" y="40" width="300" height="430"
+						   borderVisible="false" >		
+			<s:Image id="inCallPic_w" x="90" y="55" width="120" height="160"
+					 source="assets/calling_w.jpg">	
+			</s:Image>
+			<s:Image id="inCallPic_w2" x="0" y="0" source="assets/calling_w2.jpg" alpha="0">
+			</s:Image>
+			<s:Image id="sentPic" x="0" y="80" source="assets/camera2.jpg" alpha="0">
+				
+			</s:Image>
+				
+		</s:BorderContainer>
+	</s:BorderContainer>
+
+	<mx:ColorPicker x="678" y="464" change="incallDraw.drawColor = event.target.selectedColor"/>
+
+</s:Application>
